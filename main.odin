@@ -35,8 +35,8 @@ main :: proc() {
     rl.InitWindow(WIN_WIDTH, WIN_HEIGHT, "Hello Raylib in Odin")
     defer rl.CloseWindow()
 
-    player_anim_run : AnimatedSprite = init("sprites/dog_walk.png", 0.1)
-    player_anim_idle : AnimatedSprite = init("sprites/dog_idle.png", 0.1)
+    player_anim_run : Animation = init("sprites/dog_walk.png", 0.1)
+    player_anim_idle : Animation = init("sprites/dog_idle.png", 0.1)
 
     for !rl.WindowShouldClose() {
         update(&player)
@@ -45,34 +45,19 @@ main :: proc() {
         defer rl.EndDrawing()
 
         rl.ClearBackground(rl.BLUE)
-
         rl.DrawRectangleV(
             {0, f32(rl.GetScreenHeight()) - 64.0},
             {f32(rl.GetScreenWidth()), 64.0},
             rl.GRAY
         )
 
-        player_active_anim : ^AnimatedSprite = {}
-        switch player.state {
-        case .Idle:
-            player_active_anim = &player_anim_idle
-        case .Run:
+        player_active_anim : ^Animation = &player_anim_idle 
+        if player.state == .Run {
             player_active_anim = &player_anim_run
-        case .Jumping:
-            player_active_anim = &player_anim_idle
         }
 
-        player_active_anim.frame_time += rl.GetFrameTime()
-        if player_active_anim.frame_time > player_active_anim.frame_duration {
-            player_active_anim.frame_current = (player_active_anim.frame_current + 1) % player_active_anim.frame_count
-            player_active_anim.frame_time = 0
-        }
-
-        draw_source, draw_dest := anim_get_draw_rects(player_active_anim, player.pos, player.direction)
-        rl.DrawTexturePro(
-            player_active_anim.texture, 
-            draw_source, 
-            draw_dest, 0, 0, rl.WHITE)
+        anim_update(player_active_anim)
+        anim_draw(player_active_anim, player.pos, player.direction)
     }
 }
 
